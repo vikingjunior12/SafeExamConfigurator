@@ -1,7 +1,3 @@
-Here’s the text revised for an English-speaking audience with a casual "you" form and instructions for a double-click start:
-
----
-
 **SafeExamBrowser Configurator for Windows**
 
 This is a CLI tool for Windows that downloads, installs, and sets up the latest version of SafeExamBrowser for you. Note that it runs on Windows and requires administrator permissions to install.
