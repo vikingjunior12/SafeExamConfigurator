@@ -2,16 +2,28 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/charmbracelet/huh/spinner"
 )
+
+var downloadlink string = "https://api.github.com/repos/SafeExamBrowser/seb-win-refactoring/releases/latest"
 
 func main() {
 
-	fmt.Println("\033[32mStarting the application...\033[0m")
-	fmt.Println("\033[32mWillkommen beim Windows SafeExam Konfigurator\033[0m")
+	uninstall := flag.Bool("u", false, "Uninstall SafeExamBrowser")
+	flag.Parse()
+
+	if *uninstall == true {
+		fmt.Println("\033[31mDeinstallation von SafeExamBrowser wird gestartet...\033[0m")
+		fmt.Println("\033[31mFür die Deinstaltion wird das Exe Runtergeladen und wieder gelöscht...\033[0m")
+	} else {
+		fmt.Println("\033[32mWillkommen beim Careum Windows SafeExam Konfigurator\033[0m")
+	}
 
 	SafeExamBrowserLinkWindows, version, err := getLatestSafeExamBrowserURL()
 	if err != nil {
@@ -23,7 +35,7 @@ func main() {
 
 	homeDir := os.Getenv("USERPROFILE")
 	var downloadPath string = fmt.Sprintf("%s/Downloads/SafeExamBrowser-%s.exe", homeDir, modifiedVersion)
-
+	fmt.Println("")
 	fmt.Println("\033[32mDownloading SafeExamBrowser for Windows...\033[0m")
 
 	err = downloadFile(SafeExamBrowserLinkWindows, downloadPath)
@@ -32,8 +44,23 @@ func main() {
 		return
 	}
 	fmt.Println("\033[32mDownload erfolgreich abgeschlossen\033[0m")
+	fmt.Println("")
 
-	seteupexe(downloadPath) // Installation, wird gewartet
+	if *uninstall == true {
+
+		action := func() {
+			uninstallSEB(downloadPath) // Installation, wird gewartet
+			cleanup(downloadPath)
+		}
+		_ = spinner.New().Title("Deinstallation von SafeExamBrowser läuft...").Action(action).Run()
+		return
+	}
+
+	action := func() {
+		seteupexe(downloadPath) // Installation, wird gewartet
+
+	}
+	_ = spinner.New().Title("Installation von SafeExamBrowser läuft...").Action(action).Run()
 
 	fmt.Println("Starte SEB Careum Konfiguration...")
 	err = setupSEB() // Seb Datei wird eingerichtet
@@ -42,19 +69,26 @@ func main() {
 	} else {
 		fmt.Println("SEB Careum Konfiguration erfolgreich abgeschlossen.")
 	}
-	//auräumen
-	err = os.Remove(downloadPath)
+	err = cleanup(downloadPath) // Datei wird gelöscht
 	if err != nil {
 		fmt.Println("Fehler beim Löschen der Datei:", err)
-	} else {
-		fmt.Println("Datei erfolgreich gelöscht")
 	}
 
 }
 
+// error muss zurückgegeben werden, kein error, nu
+func cleanup(d string) error {
+
+	err := os.Remove(d)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Funktion zum Abrufen des neuesten Download-Links für SafeExamBrowser und gibt zwei Werte zurück
 func getLatestSafeExamBrowserURL() (string, string, error) {
-	url := "https://api.github.com/repos/SafeExamBrowser/seb-win-refactoring/releases/latest"
+	url := downloadlink
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", "", err

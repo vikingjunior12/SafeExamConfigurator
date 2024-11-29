@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -30,6 +31,8 @@ func downloadFile(url string, filepath string) error {
 
 	// Fortschritt verfolgen, indem wir den Response-Body durch einen TeeReader leiten
 	reader := bar.NewProxyReader(response.Body)
+
+	fmt.Println("Downloading...")
 
 	// Datei schreiben und Fortschritt anzeigen
 	_, err = io.Copy(outfile, reader)
